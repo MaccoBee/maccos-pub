@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macco's Pub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d0a12; --bg2:#15111e; --bg3:#1e1830; --panel:#12101a;
+  --border:#2e2545; --border2:#4a3a72;
+  --gold:#c9a84c; --gold2:#f0c96a; --silver:#8fa0b8; --text:#e8dfc8; --muted:#7a6e8a;
+  --hp:#c0392b; --hp2:#e74c3c; --mp:#2980b9; --mp2:#3498db; --xp:#27ae60;
+  --fire:#e67e22; --water:#3498db; --grass:#27ae60; --earth:#8d6e3f;
+  --electric:#f1c40f; --shadow:#9b59b6; --dragon:#1a5276; --ice:#5dade2;
+  --poison:#a569bd; --flying:#48c9b0; --light:#f9e79f; --fight:#e74c3c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0810;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Crimson Pro',serif;}
+#game{width:720px;min-height:640px;background:var(--bg);color:var(--text);border-radius:14px;border:1px solid var(--border);overflow:hidden;position:relative;box-shadow:0 0 60px rgba(0,0,0,0.8);}
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ── FONTS & BASICS ── */
+.cinzel{font-family:'Cinzel',serif;}
+.gold{color:var(--gold);}
+.muted{color:var(--muted);}
+.italic{font-style:italic;}
+
+/* ── TYPE BADGES ── */
+.badge{font-family:'Cinzel',serif;font-size:10px;padding:2px 8px;border-radius:12px;display:inline-block;letter-spacing:.5px;border:1px solid transparent;}
+.t-fuoco{background:rgba(230,126,34,.2);color:#e67e22;border-color:rgba(230,126,34,.4);}
+.t-acqua{background:rgba(52,152,219,.2);color:#5dade2;border-color:rgba(52,152,219,.4);}
+.t-erba{background:rgba(39,174,96,.2);color:#2ecc71;border-color:rgba(39,174,96,.4);}
+.t-terra{background:rgba(141,110,63,.2);color:#c9a84c;border-color:rgba(141,110,63,.4);}
+.t-elettro{background:rgba(241,196,15,.2);color:#f1c40f;border-color:rgba(241,196,15,.4);}
+.t-ombra{background:rgba(155,89,182,.2);color:#9b59b6;border-color:rgba(155,89,182,.4);}
+.t-drago{background:rgba(26,82,118,.3);color:#85c1e9;border-color:rgba(85,193,233,.4);}
+.t-ghiaccio{background:rgba(93,173,226,.2);color:#aed6f1;border-color:rgba(174,214,241,.4);}
+.t-veleno{background:rgba(165,105,189,.2);color:#c39bd3;border-color:rgba(195,155,211,.4);}
+.t-volante{background:rgba(72,201,176,.2);color:#48c9b0;border-color:rgba(72,201,176,.4);}
+.t-luce{background:rgba(249,231,159,.15);color:#f9e79f;border-color:rgba(249,231,159,.4);}
+.t-lotta{background:rgba(231,76,60,.2);color:#ec7063;border-color:rgba(236,112,99,.4);}
+
+/* ── BARS ── */
+.bar-wrap{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.bar-hp{background:linear-gradient(90deg,#922b21,#e74c3c);}
+.bar-mp{background:linear-gradient(90deg,#1a5276,#3498db);}
+.bar-xp{background:linear-gradient(90deg,#1e8449,#27ae60);}
+
+/* ══════════════════════════════════
+   TITLE SCREEN
+══════════════════════════════════ */
+#title-screen{
+  background:radial-gradient(ellipse at 50% 20%,#1a1035 0%,#0d0a12 65%);
+  align-items:center;justify-content:center;min-height:640px;padding:32px 24px;gap:0;text-align:center;
+}
+.logo{font-family:'Cinzel',serif;font-size:44px;font-weight:700;color:var(--gold);letter-spacing:7px;line-height:1;margin-bottom:4px;text-shadow:0 0 40px rgba(201,168,76,.35);}
+.logo-sub{font-family:'Cinzel',serif;font-size:12px;color:var(--silver);letter-spacing:5px;margin-bottom:12px;}
+.logo-tagline{font-size:14px;color:var(--muted);font-style:italic;margin-bottom:36px;}
+.starter-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:620px;width:100%;margin-bottom:32px;}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 10px;cursor:pointer;transition:border-color .2s,transform .2s;text-align:center;}
+.sc:hover{border-color:var(--gold);transform:translateY(-4px);}
+.sc.selected{border-color:var(--gold2);box-shadow:0 0 20px rgba(201,168,76,.25);}
+.sc-sprite{font-size:50px;display:block;margin-bottom:8px;line-height:1;}
+.sc-name{font-family:'Cinzel',serif;font-size:13px;color:var(--gold);font-weight:600;margin-bottom:5px;}
+.sc-stats{font-size:11px;color:var(--muted);line-height:1.7;}
+.btn-gold{background:linear-gradient(135deg,#7d5a1a,#c9a84c,#7d5a1a);color:#0d0a12;border:none;padding:14px 52px;font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:3px;border-radius:6px;cursor:pointer;transition:opacity .2s,transform .1s;}
+.btn-gold:hover{opacity:.85;transform:scale(1.02);}
+.btn-gold:disabled{opacity:.28;cursor:not-allowed;transform:none;}
+
+/* ══════════════════════════════════
+   MAP SCREEN
+══════════════════════════════════ */
+#map-screen{min-height:640px;flex-direction:row;}
+.map-main{flex:1;padding:22px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
+.map-header-row{display:flex;justify-content:space-between;align-items:flex-end;}
+.map-title-txt{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:3px;}
+.map-floor-badge{font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:2px;}
+.map-grid{display:flex;flex-direction:column;gap:14px;flex:1;justify-content:center;padding:8px 0;}
+.map-row{display:flex;justify-content:center;gap:24px;position:relative;}
+.mn{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;border:2px solid transparent;}
+.mn-label{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--muted);white-space:nowrap;font-family:'Cinzel',serif;letter-spacing:.5px;}
+.mn.avail{border-color:var(--gold);animation:pulse-g 2s ease-in-out infinite;}
+.mn.visited{opacity:.35;cursor:default;}
+.mn.locked{opacity:.2;cursor:default;}
+.mn:not(.locked):not(.visited):hover{transform:scale(1.18);}
+.mn-battle{background:rgba(192,57,43,.2);border-color:rgba(192,57,43,.5)!important;}
+.mn-elite{background:rgba(155,89,182,.2);border-color:rgba(155,89,182,.5)!important;}
+.mn-boss{background:rgba(201,168,76,.15);}
+.mn-item{background:rgba(39,174,96,.2);border-color:rgba(39,174,96,.5)!important;}
+.mn-heal{background:rgba(52,152,219,.2);border-color:rgba(52,152,219,.5)!important;}
+.mn-swap{background:rgba(249,231,159,.12);border-color:rgba(249,231,159,.5)!important;animation:pulse-swap 1.8s ease-in-out infinite;}
+@keyframes pulse-g{0%,100%{box-shadow:0 0 10px rgba(201,168,76,.3);}50%{box-shadow:0 0 22px rgba(201,168,76,.65);}}
+@keyframes pulse-swap{0%,100%{box-shadow:0 0 10px rgba(249,231,159,.25);}50%{box-shadow:0 0 22px rgba(249,231,159,.55);}}
+.map-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);}
+.sidebar{width:210px;background:var(--panel);border-left:1px solid var(--border);padding:18px 14px;display:flex;flex-direction:column;gap:14px;}
+.sb-header{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:3px;border-bottom:1px solid var(--border);padding-bottom:7px;}
+.pm-name{font-family:'Cinzel',serif;font-size:12px;color:var(--text);display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.pm-stat-row{font-size:11px;color:var(--muted);margin-top:5px;}
+.sb-floor{font-family:'Cinzel',serif;font-size:10px;color:var(--muted);letter-spacing:2px;text-align:center;margin-top:auto;border-top:1px solid var(--border);padding-top:10px;}
+.sb-floor-num{font-size:30px;color:var(--gold);font-weight:700;display:block;line-height:1;}
+.bar-label-row{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:2px;}
+.evolve-btn{background:var(--bg3);border:1px solid var(--gold);border-radius:6px;padding:8px 10px;cursor:pointer;font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:1px;width:100%;transition:background .2s;}
+.evolve-btn:hover{background:rgba(201,168,76,.1);}
+.evolve-btn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* ══════════════════════════════════
+   BATTLE SCREEN
+══════════════════════════════════ */
+#battle-screen{min-height:640px;position:relative;}
+.battle-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 55%,#120825 0%,#0d0a12 60%);z-index:0;}
+.battle-wrap{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;min-height:640px;}
+.battle-top{padding:10px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:rgba(13,10,18,.85);}
+.battle-type-lbl{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:3px;}
+.combat-zone{display:flex;align-items:flex-end;justify-content:space-between;padding:20px 36px;flex:1;min-height:210px;}
+.combatant{display:flex;flex-direction:column;gap:10px;width:200px;}
+.combatant.enemy{align-items:flex-start;}
+.combatant.player{align-items:flex-end;}
+.c-sprite{font-size:84px;line-height:1;filter:drop-shadow(0 4px 18px rgba(0,0,0,.8));transition:transform .1s;}
+.c-sprite.shake{animation:shake .3s ease-in-out;}
+.c-sprite.bounce{animation:bounce .4s ease-in-out;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}50%{transform:translateX(5px);}}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.c-info{width:200px;}
+.c-name{font-family:'Cinzel',serif;font-size:13px;color:var(--text);font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.c-lvl{font-size:10px;color:var(--muted);font-family:'Cinzel',serif;}
+.c-hp-row{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-top:2px;margin-bottom:4px;}
+.status-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;}
+.stbadge{font-size:10px;padding:1px 6px;border-radius:8px;font-family:'Cinzel',serif;}
+.st-burn{background:rgba(230,126,34,.2);color:#e67e22;}
+.st-freeze{background:rgba(93,173,226,.2);color:#5dade2;}
+.st-stun{background:rgba(241,196,15,.2);color:#f1c40f;}
+.st-poison{background:rgba(165,105,189,.2);color:#c39bd3;}
+.st-def_up{background:rgba(39,174,96,.2);color:#2ecc71;}
+.st-atk_up{background:rgba(230,126,34,.2);color:#e67e22;}
+.battle-vs{font-family:'Cinzel',serif;font-size:22px;color:var(--border2);font-weight:700;align-self:center;letter-spacing:4px;}
+.battle-log{margin:0 18px;background:rgba(13,10,18,.92);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-height:62px;max-height:78px;overflow-y:auto;font-style:italic;color:var(--silver);font-size:14px;line-height:1.55;}
+.log-entry{margin-bottom:1px;}
+.log-entry.new{color:var(--text);}
+
+/* Strategy panel */
+.strategy-panel{padding:14px 18px;border-top:1px solid var(--border);background:rgba(13,10,18,.95);}
+.strategy-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.turn-lbl{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:2px;display:flex;align-items:center;gap:6px;}
+.turn-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.strat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.strat-btn{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s;color:var(--text);font-family:'Cinzel',serif;}
+.strat-btn:hover:not(:disabled){border-color:var(--gold);background:var(--bg3);}
+.strat-btn:disabled{opacity:.35;cursor:not-allowed;}
+.strat-btn.active-strat{border-color:var(--gold2);background:rgba(201,168,76,.12);}
+.strat-icon{font-size:24px;display:block;margin-bottom:4px;}
+.strat-name{font-size:10px;color:var(--gold);letter-spacing:1px;}
+.strat-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3;}
+.auto-badge{font-size:10px;color:var(--muted);font-family:'Cinzel',serif;letter-spacing:1px;}
+.speed-btn{font-family:'Cinzel',serif;font-size:10px;color:var(--muted);background:var(--bg2);border:1px solid var(--border);padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;}
+.speed-btn:hover{color:var(--gold);border-color:var(--gold);}
+
+/* ══════════════════════════════════
+   REWARD / SWAP / EVOLVE SCREENS
+══════════════════════════════════ */
+.choice-screen{align-items:center;justify-content:center;min-height:640px;padding:36px 24px;gap:20px;background:radial-gradient(ellipse at 50% 25%,#1a1035 0%,#0d0a12 70%);text-align:center;}
+.choice-title{font-family:'Cinzel',serif;font-size:20px;color:var(--gold);letter-spacing:4px;}
+.choice-subtitle{font-size:14px;color:var(--muted);font-style:italic;}
+.choice-grid{display:grid;gap:14px;max-width:580px;width:100%;}
+.choice-grid.cols3{grid-template-columns:repeat(3,1fr);}
+.choice-grid.cols2{grid-template-columns:repeat(2,1fr);}
+.choice-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 12px;cursor:pointer;text-align:center;transition:border-color .2s,transform .2s;}
+.choice-card:hover{border-color:var(--gold);transform:translateY(-3px);}
+.choice-card.keep{border-color:var(--border2);}
+.cc-icon{font-size:40px;margin-bottom:8px;display:block;}
+.cc-name{font-family:'Cinzel',serif;font-size:13px;color:var(--gold);font-weight:600;margin-bottom:5px;}
+.cc-desc{font-size:12px;color:var(--muted);line-height:1.45;}
+.cc-stats{font-size:11px;color:var(--silver);margin-top:6px;line-height:1.6;}
+.btn-outline{background:var(--bg2);color:var(--gold);border:1px solid var(--border2);padding:11px 34px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;border-radius:6px;cursor:pointer;transition:background .2s;}
+.btn-outline:hover{background:var(--bg3);}
+
+/* ══════════════════════════════════
+   GAME OVER / VICTORY
+══════════════════════════════════ */
+#gameover-screen{align-items:center;justify-content:center;min-height:640px;gap:18px;text-align:center;background:radial-gradient(ellipse at 50% 50%,#1a0505 0%,#0d0a12 70%);}
+.go-title{font-family:'Cinzel',serif;font-size:56px;color:#c0392b;letter-spacing:6px;font-weight:700;text-shadow:0 0 35px rgba(192,57,43,.5);}
+.go-msg{font-size:18px;color:var(--silver);font-style:italic;}
+.go-stat{font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:2px;margin-top:6px;}
+.go-val{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);}
+
+/* floaters */
+.dmg-float{position:absolute;font-family:'Cinzel',serif;font-size:22px;font-weight:700;pointer-events:none;animation:float-up 1.2s ease-out forwards;z-index:999;}
+.eff-float{position:absolute;font-family:'Cinzel',serif;font-size:12px;pointer-events:none;animation:float-up 1.4s ease-out forwards;z-index:998;}
+@keyframes float-up{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-65px) scale(1.3);}}
+
+/* notify toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;padding:10px 28px;border-radius:6px;z-index:9999;animation:toast-in .3s ease-out;pointer-events:none;}
+@keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+</style>
+</head>
+<body>
+<div id="game" role="application" aria-label="Macco's Pub">
+
+<!-- ════════ TITLE ════════ -->
+<div id="title-screen" class="screen active">
+  <div class="logo">MACCO'S PUB</div>
+  <div class="logo-sub">A FANTASY ROGUELIKE</div>
+  <div class="logo-tagline">Scegli il tuo compagno e scendi nel dungeon</div>
+  <div class="starter-grid" id="starter-grid"></div>
+  <button class="btn-gold" id="btn-begin" disabled onclick="beginGame()">INIZIA L'AVVENTURA</button>
+</div>
+
+<!-- ════════ MAP ════════ -->
+<div id="map-screen" class="screen">
+  <div class="map-main">
+    <div class="map-header-row">
+      <div>
+        <div class="map-title-txt">DUNGEON MAP</div>
+        <div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:2px">Scegli il prossimo nodo</div>
+      </div>
+      <div class="map-floor-badge" id="map-floor-badge">FLOOR 1</div>
+    </div>
+    <div class="map-grid" id="map-grid"></div>
+    <div class="map-legend">
+      <span>⚔ Battaglia</span><span>💜 Elite</span><span>👑 Boss</span>
+      <span>🎁 Oggetto</span><span>💧 Riposo</span><span>✨ Creatura</span>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="sb-header">— PARTY —</div>
+    <div id="party-sb"></div>
+    <button class="evolve-btn" id="evolve-btn" onclick="doEvolve()" disabled>⬆ EVOLVITI</button>
+    <div class="sb-header" style="margin-top:4px">— OGGETTI —</div>
+    <div id="items-sb" style="font-size:11px;color:var(--muted);font-style:italic;min-height:30px"></div>
+    <div class="sb-floor">
+      <span class="sb-floor-num" id="floor-num">1</span>FLOOR
+    </div>
+  </div>
+</div>
+
+<!-- ════════ BATTLE ════════ -->
+<div id="battle-screen" class="screen">
+  <div class="battle-bg"></div>
+  <div class="battle-wrap">
+    <div class="battle-top">
+      <span class="battle-type-lbl" id="btl-lbl">BATTAGLIA</span>
+      <span style="font-size:11px;color:var(--muted);font-family:'Cinzel',serif" id="btl-turn">Turno 1</span>
+    </div>
+    <div class="combat-zone">
+      <div class="combatant enemy">
+        <div class="c-info">
+          <div class="c-name"><span id="e-name">???</span><span class="c-lvl" id="e-lvl">Lv1</span></div>
+          <div class="bar-wrap"><div class="bar-fill bar-hp" id="e-hp-bar" style="width:100%"></div></div>
+          <div class="c-hp-row"><span>HP</span><span id="e-hp-txt">100/100</span></div>
+          <div class="status-row" id="e-status"></div>
+        </div>
+        <div class="c-sprite" id="e-sprite">🐺</div>
+      </div>
+      <div class="battle-vs">VS</div>
+      <div class="combatant player">
+        <div class="c-sprite" id="p-sprite">🐉</div>
+        <div class="c-info" style="text-align:right">
+          <div class="c-name" style="justify-content:flex-end"><span class="c-lvl" id="p-lvl">Lv1</span><span id="p-name">—</span></div>
+          <div class="bar-wrap"><div class="bar-fill bar-hp" id="p-hp-bar" style="width:100%"></div></div>
+          <div class="c-hp-row"><span id="p-hp-txt">80/80</span><span>HP</span></div>
+          <div class="bar-wrap" style="margin-top:3px"><div class="bar-fill bar-mp" id="p-mp-bar" style="width:100%"></div></div>
+          <div class="c-hp-row"><span id="p-mp-txt">MP 40/40</span><span>MP</span></div>
+          <div class="bar-wrap" style="margin-top:3px"><div class="bar-fill bar-xp" id="p-xp-bar" style="width:0%"></div></div>
+          <div class="c-hp-row"><span id="p-xp-txt">XP 0/100</span><span>XP</span></div>
+          <div class="status-row" style="justify-content:flex-end" id="p-status"></div>
+        </div>
+      </div>
+    </div>
+    <div class="battle-log" id="btl-log"></div>
+    <div class="strategy-panel">
+      <div class="strategy-top">
+        <div class="turn-lbl"><div class="turn-dot"></div><span id="strat-turn-lbl">SCEGLI STRATEGIA</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="auto-badge" id="auto-label">AUTO</span>
+          <button class="speed-btn" id="speed-btn" onclick="toggleSpeed()">⏩ 2x</button>
+        </div>
+      </div>
+      <div class="strat-grid">
+        <button class="strat-btn" id="sb-attack" onclick="setStrat('attack')">
+          <span class="strat-icon">⚔️</span>
+          <div class="strat-name">ATTACCA</div>
+          <div class="strat-desc">+30% danno</div>
+        </button>
+        <button class="strat-btn" id="sb-defend" onclick="setStrat('defend')">
+          <span class="strat-icon">🛡️</span>
+          <div class="strat-name">DIFENDI</div>
+          <div class="strat-desc">-40% danni subiti</div>
+        </button>
+        <button class="strat-btn" id="sb-charge" onclick="setStrat('charge')">
+          <span class="strat-icon">⚡</span>
+          <div class="strat-name">CARICA</div>
+          <div class="strat-desc">Recupera MP</div>
+        </button>
+        <button class="strat-btn" id="sb-item" onclick="setStrat('item')">
+          <span class="strat-icon">🧪</span>
+          <div class="strat-name">OGGETTO</div>
+          <div class="strat-desc" id="strat-item-desc">Nessuno</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ REWARD ════════ -->
+<div id="reward-screen" class="screen choice-screen">
+  <div class="choice-title">✦ RICOMPENSA ✦</div>
+  <div class="choice-subtitle" id="reward-sub">Scegli un oggetto</div>
+  <div class="choice-grid cols3" id="reward-grid"></div>
+  <button class="btn-outline" onclick="skipReward()">Salta →</button>
+</div>
+
+<!-- ════════ SWAP ════════ -->
+<div id="swap-screen" class="screen choice-screen">
+  <div class="choice-title">✨ CREATURA TROVATA</div>
+  <div class="choice-subtitle">Vuoi cambiare compagno? Puoi anche tenere quello attuale.</div>
+  <div class="choice-grid cols2" id="swap-grid" style="max-width:480px"></div>
+  <div class="choice-card keep" style="max-width:480px;width:100%;cursor:pointer;border-radius:12px;padding:14px;" onclick="keepCurrent()">
+    <span style="font-family:'Cinzel',serif;font-size:13px;color:var(--silver)">Tieni il tuo attuale compagno</span>
+  </div>
+</div>
+
+<!-- ════════ EVOLVE CONFIRM ════════ -->
+<div id="evolve-screen" class="screen choice-screen">
+  <div class="choice-title">⬆ EVOLUZIONE</div>
+  <div class="choice-subtitle" id="evo-sub">Il tuo compagno è pronto ad evolvere!</div>
+  <div class="choice-grid cols2" id="evo-grid" style="max-width:480px"></div>
+</div>
+
+<!-- ════════ GAME OVER ════════ -->
+<div id="gameover-screen" class="screen">
+  <div class="go-title">SCONFITTO</div>
+  <div class="go-msg" id="go-msg">Il dungeon ti ha inghiottito...</div>
+  <div class="go-stat">FLOOR RAGGIUNTO <span class="go-val" id="go-floor">1</span></div>
+  <div class="go-stat">NEMICI SCONFITTI <span class="go-val" id="go-kills">0</span></div>
+  <button class="btn-outline" style="margin-top:16px" onclick="restartGame()">RICOMINCIA</button>
+</div>
+
+</div><!-- #game -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════
+
+const TYPE_CHART = {
+  fuoco:    {fuoco:.5, acqua:.5, erba:2,  terra:1, elettro:1, ombra:.5, drago:.5, ghiaccio:2, veleno:1, volante:1, luce:.5, lotta:1},
+  acqua:    {fuoco:2,  acqua:.5, erba:.5, terra:2, elettro:.5,ombra:1,  drago:.5, ghiaccio:1, veleno:1, volante:1, luce:1,  lotta:1},
+  erba:     {fuoco:.5, acqua:2,  erba:.5, terra:2, elettro:1, ombra:1,  drago:.5, ghiaccio:.5,veleno:.5,volante:.5,luce:1,  lotta:1},
+  terra:    {fuoco:1,  acqua:1,  erba:.5, terra:1, elettro:2, ombra:1,  drago:1,  ghiaccio:1, veleno:2, volante:.5,luce:1,  lotta:1},
+  elettro:  {fuoco:1,  acqua:2,  erba:.5, terra:.5,elettro:.5,ombra:1,  drago:.5, ghiaccio:1, veleno:1, volante:2, luce:1,  lotta:1},
+  ombra:    {fuoco:1,  acqua:1,  erba:1,  terra:1, elettro:1, ombra:.5, drago:1,  ghiaccio:1, veleno:1, volante:1, luce:2,  lotta:1},
+  drago:    {fuoco:.5, acqua:.5, erba:.5, terra:1, elettro:.5,ombra:1,  drago:2,  ghiaccio:2, veleno:1, volante:1, luce:.5, lotta:.5},
+  ghiaccio: {fuoco:.5, acqua:.5, erba:2,  terra:2, elettro:1, ombra:1,  drago:2,  ghiaccio:.5,veleno:1, volante:2, luce:1,  lotta:1},
+  veleno:   {fuoco:1,  acqua:1,  erba:2,  terra:.5,elettro:1, ombra:1,  drago:1,  ghiaccio:1, veleno:.5,volante:1, luce:1,  lotta:.5},
+  volante:  {fuoco:1,  acqua:1,  erba:2,  terra:2, elettro:.5,ombra:1,  drago:1,  ghiaccio:.5,veleno:1, volante:1, luce:1,  lotta:2},
+  luce:     {fuoco:1,  acqua:1,  erba:1,  terra:1, elettro:1, ombra:2,  drago:1,  ghiaccio:1, veleno:1, volante:1, luce:.5, lotta:1},
+  lotta:    {fuoco:1,  acqua:1,  erba:1,  terra:1, elettro:1, ombra:.5, drago:1,  ghiaccio:2, veleno:2, volante:.5,luce:1,  lotta:.5},
+};
+
+function typeEff(atkType, defType) {
+  return (TYPE_CHART[atkType] && TYPE_CHART[atkType][defType]) ?? 1;
+}
+
+// 12 starter lines: each has 3 forms
+const CREATURE_LINES = {
+  fuoco:[
+    {name:"Ignaroth",emoji:"🐲",type:"fuoco",hp:80,atk:14,def:8,spd:10,mp:40,moves:["Artiglio","Fiamma","Tempesta di Fuoco","Scaglie Ardenti"]},
+    {name:"Pyrovex",emoji:"🐉",type:"fuoco",hp:105,atk:19,def:11,spd:13,mp:50,moves:["Artiglio","Fiamma","Tempesta di Fuoco","Ruggito Infernale"]},
+    {name:"Infernalis",emoji:"🔥",type:"fuoco",hp:135,atk:25,def:14,spd:16,mp:60,moves:["Artiglio","Fiamma","Tempesta di Fuoco","Esplosione Solare"]}
+  ],
+  acqua:[
+    {name:"Aqualis",emoji:"🐠",type:"acqua",hp:85,atk:11,def:11,spd:11,mp:45,moves:["Pinna","Cascata","Maelstrom","Bolla Gelata"]},
+    {name:"Marevex",emoji:"🌊",type:"acqua",hp:110,atk:15,def:15,spd:14,mp:55,moves:["Pinna","Cascata","Maelstrom","Tsunami"]},
+    {name:"Leviathor",emoji:"🐋",type:"acqua",hp:145,atk:20,def:20,spd:17,mp:65,moves:["Pinna","Cascata","Maelstrom","Diluvio Eterno"]}
+  ],
+  erba:[
+    {name:"Sylveon",emoji:"🌿",type:"erba",hp:78,atk:12,def:10,spd:13,mp:42,moves:["Vite","Raffica Verde","Burrasca Floreale","Rigenerazione"]},
+    {name:"Thornix",emoji:"🌳",type:"erba",hp:100,atk:16,def:13,spd:16,mp:52,moves:["Vite","Raffica Verde","Burrasca Floreale","Foresta Sacra"]},
+    {name:"Arboreus",emoji:"🌲",type:"erba",hp:130,atk:21,def:17,spd:19,mp:62,moves:["Vite","Raffica Verde","Burrasca Floreale","Tempesta di Spine"]}
+  ],
+  terra:[
+    {name:"Terravex",emoji:"🪨",type:"terra",hp:95,atk:13,def:16,spd:6,mp:35,moves:["Pugno Roccioso","Valanga","Terremoto","Fortezza"]},
+    {name:"Golithon",emoji:"⛰️",type:"terra",hp:125,atk:18,def:22,spd:8,mp:45,moves:["Pugno Roccioso","Valanga","Terremoto","Meteorite"]},
+    {name:"Terradon",emoji:"🗿",type:"terra",hp:160,atk:24,def:29,spd:9,mp:55,moves:["Pugno Roccioso","Valanga","Terremoto","Frana Colossale"]}
+  ],
+  elettro:[
+    {name:"Voltix",emoji:"⚡",type:"elettro",hp:72,atk:15,def:7,spd:16,mp:44,moves:["Scarica","Fulmine","Tempesta Elettrica","Sovraccárica"]},
+    {name:"Thunderax",emoji:"🌩️",type:"elettro",hp:95,atk:20,def:9,spd:20,mp:54,moves:["Scarica","Fulmine","Tempesta Elettrica","Plasma Ionico"]},
+    {name:"Zeravolth",emoji:"🌪️",type:"elettro",hp:120,atk:27,def:12,spd:25,mp:65,moves:["Scarica","Fulmine","Tempesta Elettrica","Apocalisse Elettrica"]}
+  ],
+  ombra:[
+    {name:"Umbralith",emoji:"👻",type:"ombra",hp:70,atk:16,def:6,spd:15,mp:50,moves:["Tocco Oscuro","Lama d'Ombra","Maledizione","Vortice Oscuro"]},
+    {name:"Shaderix",emoji:"🌑",type:"ombra",hp:92,atk:22,def:8,spd:19,mp:60,moves:["Tocco Oscuro","Lama d'Ombra","Maledizione","Manto di Tenebra"]},
+    {name:"Abyssion",emoji:"🕳️",type:"ombra",hp:118,atk:29,def:11,spd:23,mp:72,moves:["Tocco Oscuro","Lama d'Ombra","Maledizione","Oblio Eterno"]}
+  ],
+  drago:[
+    {name:"Drakith",emoji:"🐲",type:"drago",hp:88,atk:17,def:12,spd:9,mp:38,moves:["Artiglio del Drago","Soffio","Vortice Draconico","Squama Adamantina"]},
+    {name:"Dracorix",emoji:"🐉",type:"drago",hp:115,atk:23,def:16,spd:12,mp:50,moves:["Artiglio del Drago","Soffio","Vortice Draconico","Furia dei Draghi"]},
+    {name:"Ancienthorn",emoji:"🦕",type:"drago",hp:150,atk:30,def:21,spd:14,mp:62,moves:["Artiglio del Drago","Soffio","Vortice Draconico","Cataclisma Antico"]}
+  ],
+  ghiaccio:[
+    {name:"Glacith",emoji:"❄️",type:"ghiaccio",hp:76,atk:13,def:9,spd:14,mp:43,moves:["Frammento di Ghiaccio","Blizzard","Valanga Glaciale","Cristallizzazione"]},
+    {name:"Cryovex",emoji:"🧊",type:"ghiaccio",hp:100,atk:18,def:12,spd:17,mp:53,moves:["Frammento di Ghiaccio","Blizzard","Valanga Glaciale","Aurora Boreale"]},
+    {name:"Permafrost",emoji:"🏔️",type:"ghiaccio",hp:130,atk:24,def:17,spd:21,mp:64,moves:["Frammento di Ghiaccio","Blizzard","Valanga Glaciale","Era Glaciale"]}
+  ],
+  veleno:[
+    {name:"Toxith",emoji:"🐍",type:"veleno",hp:75,atk:14,def:8,spd:13,mp:46,moves:["Pungiglione","Nebbia Tossica","Pioggia Acida","Virulenza"]},
+    {name:"Venenox",emoji:"☠️",type:"veleno",hp:98,atk:19,def:11,spd:16,mp:56,moves:["Pungiglione","Nebbia Tossica","Pioggia Acida","Corrosione Totale"]},
+    {name:"Morbidum",emoji:"💀",type:"veleno",hp:128,atk:25,def:15,spd:20,mp:66,moves:["Pungiglione","Nebbia Tossica","Pioggia Acida","Plaga Purpurea"]}
+  ],
+  volante:[
+    {name:"Aethix",emoji:"🦅",type:"volante",hp:73,atk:13,def:7,spd:17,mp:44,moves:["Becco","Turbine d'Ali","Tifone Celeste","Grazia del Vento"]},
+    {name:"Stormwing",emoji:"🦉",type:"volante",hp:96,atk:18,def:9,spd:22,mp:54,moves:["Becco","Turbine d'Ali","Tifone Celeste","Occhio del Ciclone"]},
+    {name:"Celestior",emoji:"🦋",type:"volante",hp:124,atk:24,def:13,spd:28,mp:65,moves:["Becco","Turbine d'Ali","Tifone Celeste","Vento Celeste"]}
+  ],
+  luce:[
+    {name:"Lumith",emoji:"✨",type:"luce",hp:78,atk:15,def:10,spd:12,mp:48,moves:["Raggio","Lampo Sacro","Tempesta di Luce","Benedizione"]},
+    {name:"Aurelix",emoji:"🌟",type:"luce",hp:102,atk:21,def:13,spd:15,mp:58,moves:["Raggio","Lampo Sacro","Tempesta di Luce","Aureola Divina"]},
+    {name:"Solarius",emoji:"☀️",type:"luce",hp:132,atk:28,def:17,spd:18,mp:70,moves:["Raggio","Lampo Sacro","Tempesta di Luce","Supernova"]}
+  ],
+  lotta:[
+    {name:"Fistix",emoji:"👊",type:"lotta",hp:90,atk:16,def:13,spd:8,mp:36,moves:["Jab","Uppercut","Raffica Pugilistica","Adrenalina"]},
+    {name:"Brawlix",emoji:"🥊",type:"lotta",hp:118,atk:22,def:18,spd:11,mp:46,moves:["Jab","Uppercut","Raffica Pugilistica","Colpo Titanico"]},
+    {name:"Ironclad",emoji:"⚙️",type:"lotta",hp:152,atk:29,def:24,spd:13,mp:56,moves:["Jab","Uppercut","Raffica Pugilistica","Sfondamento"]}
+  ]
+};
+
+// move definitions
+const MOVES_DB = {
+  // fuoco
+  "Artiglio":        {power:18,mpCost:0,type:"fuoco",effect:null,desc:"Colpo fisico"},
+  "Fiamma":          {power:30,mpCost:8,type:"fuoco",effect:{st:"burn",ch:.35,turns:3},desc:"Può bruciare"},
+  "Tempesta di Fuoco":{power:46,mpCost:16,type:"fuoco",effect:null,desc:"Grande esplosione"},
+  "Scaglie Ardenti": {power:0, mpCost:10,type:"fuoco",effect:{st:"atk_up",turns:2},desc:"+ATK 2 turni"},
+  "Ruggito Infernale":{power:50,mpCost:18,type:"fuoco",effect:{st:"burn",ch:.5,turns:3},desc:"Brucia sempre"},
+  "Esplosione Solare":{power:65,mpCost:24,type:"fuoco",effect:null,desc:"Devastante"},
+  // acqua
+  "Pinna":           {power:16,mpCost:0,type:"acqua",effect:null,desc:"Colpo veloce"},
+  "Cascata":         {power:28,mpCost:8,type:"acqua",effect:null,desc:"Acqua potente"},
+  "Maelstrom":       {power:44,mpCost:14,type:"acqua",effect:{st:"def_up",turns:2},desc:"+DEF 2 turni"},
+  "Bolla Gelata":    {power:22,mpCost:10,type:"acqua",effect:{st:"freeze",ch:.3,turns:2},desc:"Può congelare"},
+  "Tsunami":         {power:52,mpCost:20,type:"acqua",effect:null,desc:"Onda colossale"},
+  "Diluvio Eterno":  {power:68,mpCost:26,type:"acqua",effect:{st:"freeze",ch:.4,turns:2},desc:"Congela spesso"},
+  // erba
+  "Vite":            {power:15,mpCost:0,type:"erba",effect:null,desc:"Frustata verde"},
+  "Raffica Verde":   {power:28,mpCost:8,type:"erba",effect:null,desc:"Tempesta di foglie"},
+  "Burrasca Floreale":{power:42,mpCost:14,type:"erba",effect:{st:"poison",ch:.4,turns:3},desc:"Può avvelenare"},
+  "Rigenerazione":   {power:0, mpCost:12,type:"erba",effect:{st:"regen",turns:3},desc:"Cura ogni turno"},
+  "Foresta Sacra":   {power:50,mpCost:18,type:"erba",effect:{st:"poison",ch:.5,turns:3},desc:"Avvelena spesso"},
+  "Tempesta di Spine":{power:66,mpCost:24,type:"erba",effect:null,desc:"Spine ovunque"},
+  // terra
+  "Pugno Roccioso":  {power:20,mpCost:0,type:"terra",effect:null,desc:"Colpo pesante"},
+  "Valanga":         {power:34,mpCost:10,type:"terra",effect:{st:"stun",ch:.3,turns:1},desc:"Può stordire"},
+  "Terremoto":       {power:52,mpCost:18,type:"terra",effect:null,desc:"Distruzione totale"},
+  "Fortezza":        {power:0, mpCost:10,type:"terra",effect:{st:"def_up",turns:3},desc:"+DEF 3 turni"},
+  "Meteorite":       {power:58,mpCost:22,type:"terra",effect:{st:"stun",ch:.4,turns:1},desc:"Stordisce spesso"},
+  "Frana Colossale": {power:72,mpCost:28,type:"terra",effect:null,desc:"Cataclisma"},
+  // elettro
+  "Scarica":         {power:17,mpCost:0,type:"elettro",effect:null,desc:"Scossa veloce"},
+  "Fulmine":         {power:32,mpCost:10,type:"elettro",effect:{st:"stun",ch:.35,turns:1},desc:"Può stordire"},
+  "Tempesta Elettrica":{power:48,mpCost:16,type:"elettro",effect:null,desc:"Campo magnetico"},
+  "Sovraccárica":    {power:0, mpCost:8,type:"elettro",effect:{st:"atk_up",turns:3},desc:"+ATK 3 turni"},
+  "Plasma Ionico":   {power:55,mpCost:20,type:"elettro",effect:{st:"stun",ch:.5,turns:1},desc:"Stordisce spesso"},
+  "Apocalisse Elettrica":{power:70,mpCost:26,type:"elettro",effect:null,desc:"Fulmini totali"},
+  // ombra
+  "Tocco Oscuro":    {power:16,mpCost:0,type:"ombra",effect:null,desc:"Colpo rapido"},
+  "Lama d'Ombra":    {power:30,mpCost:8,type:"ombra",effect:null,desc:"Lama invisibile"},
+  "Maledizione":     {power:0, mpCost:12,type:"ombra",effect:{st:"drain",turns:3},desc:"Drena vita ogni turno"},
+  "Vortice Oscuro":  {power:48,mpCost:16,type:"ombra",effect:null,desc:"Esplosione oscura"},
+  "Manto di Tenebra":{power:40,mpCost:14,type:"ombra",effect:{st:"def_up",turns:2},desc:"+DEF 2 turni"},
+  "Oblio Eterno":    {power:66,mpCost:24,type:"ombra",effect:{st:"burn",ch:.4,turns:2},desc:"Brucia e distrugge"},
+  // drago
+  "Artiglio del Drago":{power:20,mpCost:0,type:"drago",effect:null,desc:"Artigli affilati"},
+  "Soffio":          {power:33,mpCost:10,type:"drago",effect:{st:"burn",ch:.3,turns:2},desc:"Soffio ardente"},
+  "Vortice Draconico":{power:50,mpCost:16,type:"drago",effect:null,desc:"Turbine ancestrale"},
+  "Squama Adamantina":{power:0, mpCost:10,type:"drago",effect:{st:"def_up",turns:3},desc:"+DEF 3 turni"},
+  "Furia dei Draghi":{power:56,mpCost:20,type:"drago",effect:{st:"atk_up",turns:2},desc:"+ATK poi attacca"},
+  "Cataclisma Antico":{power:74,mpCost:28,type:"drago",effect:null,desc:"Potere primordiale"},
+  // ghiaccio
+  "Frammento di Ghiaccio":{power:17,mpCost:0,type:"ghiaccio",effect:null,desc:"Schegge gelide"},
+  "Blizzard":        {power:32,mpCost:10,type:"ghiaccio",effect:{st:"freeze",ch:.35,turns:2},desc:"Può congelare"},
+  "Valanga Glaciale":{power:48,mpCost:16,type:"ghiaccio",effect:null,desc:"Muro di ghiaccio"},
+  "Cristallizzazione":{power:0, mpCost:12,type:"ghiaccio",effect:{st:"def_up",turns:3},desc:"+DEF cristallina"},
+  "Aurora Boreale":  {power:54,mpCost:20,type:"ghiaccio",effect:{st:"freeze",ch:.5,turns:2},desc:"Congela spesso"},
+  "Era Glaciale":    {power:70,mpCost:26,type:"ghiaccio",effect:{st:"freeze",ch:.6,turns:3},desc:"Congela tutto"},
+  // veleno
+  "Pungiglione":     {power:15,mpCost:0,type:"veleno",effect:null,desc:"Colpo velenoso"},
+  "Nebbia Tossica":  {power:0, mpCost:8,type:"veleno",effect:{st:"poison",ch:.8,turns:4},desc:"Avvelena quasi sempre"},
+  "Pioggia Acida":   {power:36,mpCost:12,type:"veleno",effect:{st:"poison",ch:.4,turns:3},desc:"Corrode l'armatura"},
+  "Virulenza":       {power:44,mpCost:16,type:"veleno",effect:{st:"poison",ch:.6,turns:3},desc:"Tossine potenti"},
+  "Corrosione Totale":{power:50,mpCost:18,type:"veleno",effect:{st:"def_down",turns:3},desc:"-DEF nemica"},
+  "Plaga Purpurea":  {power:66,mpCost:24,type:"veleno",effect:{st:"poison",ch:.7,turns:4},desc:"Veleno letale"},
+  // volante
+  "Becco":           {power:16,mpCost:0,type:"volante",effect:null,desc:"Colpo preciso"},
+  "Turbine d'Ali":   {power:28,mpCost:8,type:"volante",effect:null,desc:"Sbattito rapido"},
+  "Tifone Celeste":  {power:45,mpCost:14,type:"volante",effect:{st:"stun",ch:.3,turns:1},desc:"Può stordire"},
+  "Grazia del Vento":{power:0, mpCost:10,type:"volante",effect:{st:"spd_up",turns:3},desc:"+SPD 3 turni"},
+  "Occhio del Ciclone":{power:52,mpCost:18,type:"volante",effect:null,desc:"Centro della tempesta"},
+  "Vento Celeste":   {power:68,mpCost:24,type:"volante",effect:{st:"stun",ch:.45,turns:1},desc:"Uragano divino"},
+  // luce
+  "Raggio":          {power:17,mpCost:0,type:"luce",effect:null,desc:"Raggio puro"},
+  "Lampo Sacro":     {power:32,mpCost:10,type:"luce",effect:null,desc:"Luce abbagliante"},
+  "Tempesta di Luce":{power:50,mpCost:16,type:"luce",effect:null,desc:"Radiazione sacra"},
+  "Benedizione":     {power:0, mpCost:12,type:"luce",effect:{st:"regen",turns:3},desc:"Cura ogni turno"},
+  "Aureola Divina":  {power:56,mpCost:20,type:"luce",effect:{st:"atk_up",turns:2},desc:"Forza divina"},
+  "Supernova":       {power:72,mpCost:26,type:"luce",effect:null,desc:"Esplosione stellare"},
+  // lotta
+  "Jab":             {power:18,mpCost:0,type:"lotta",effect:null,desc:"Colpo rapido"},
+  "Uppercut":        {power:30,mpCost:8,type:"lotta",effect:{st:"stun",ch:.3,turns:1},desc:"Può stordire"},
+  "Raffica Pugilistica":{power:46,mpCost:14,type:"lotta",effect:null,desc:"Combinazione"},
+  "Adrenalina":      {power:0, mpCost:10,type:"lotta",effect:{st:"atk_up",turns:3},desc:"+ATK adrenalina"},
+  "Colpo Titanico":  {power:54,mpCost:18,type:"lotta",effect:{st:"stun",ch:.4,turns:1},desc:"Stordisce spesso"},
+  "Sfondamento":     {power:70,mpCost:24,type:"lotta",effect:null,desc:"Demolisce tutto"},
+};
+
+const ITEMS_POOL = [
+  {name:"Pozione HP",emoji:"🧪",desc:"Ripristina 35 HP",effect:"heal_hp",val:35},
+  {name:"Pozione MP",emoji:"💧",desc:"Ripristina 25 MP",effect:"heal_mp",val:25},
+  {name:"Amuleto Antico",emoji:"📿",desc:"+4 ATK permanente",effect:"atk_perm",val:4},
+  {name:"Scudo Spezzato",emoji:"🛡️",desc:"+4 DEF permanente",effect:"def_perm",val:4},
+  {name:"Frutto Arcano",emoji:"🍎",desc:"+18 HP massimi",effect:"maxhp",val:18},
+  {name:"Pietra del Mana",emoji:"💎",desc:"+12 MP massimi",effect:"maxmp",val:12},
+  {name:"Elisir Vitale",emoji:"⚗️",desc:"Cura 60% HP",effect:"heal_pct",val:.6},
+  {name:"Gemma Aguzza",emoji:"💠",desc:"+6 ATK permanente",effect:"atk_perm",val:6},
+  {name:"Amuleto d'Acciaio",emoji:"🔩",desc:"+6 DEF permanente",effect:"def_perm",val:6},
+];
+
+const ENEMIES_DB = {
+  battle:[
+    {name:"Spirito Selvatico",emoji:"🌀",type:"volante",hp:50,atk:10,def:5,xp:22,moves:["Turbine d'Ali","Becco"]},
+    {name:"Golem Inferiore",emoji:"🗿",type:"terra",hp:70,atk:9,def:13,xp:26,moves:["Pugno Roccioso","Fortezza"]},
+    {name:"Drago Minore",emoji:"🦎",type:"drago",hp:55,atk:13,def:7,xp:28,moves:["Artiglio del Drago","Soffio"]},
+    {name:"Lich Errante",emoji:"💀",type:"ombra",hp:48,atk:14,def:4,xp:30,moves:["Tocco Oscuro","Maledizione"]},
+    {name:"Slime Velenoso",emoji:"🟢",type:"veleno",hp:45,atk:10,def:6,xp:20,moves:["Pungiglione","Nebbia Tossica"]},
+    {name:"Arciere di Ghiaccio",emoji:"🧊",type:"ghiaccio",hp:52,atk:12,def:8,xp:24,moves:["Frammento di Ghiaccio","Blizzard"]},
+    {name:"Lupo del Tuono",emoji:"⚡",type:"elettro",hp:58,atk:13,def:6,xp:27,moves:["Scarica","Fulmine"]},
+    {name:"Creatura di Luce",emoji:"✨",type:"luce",hp:50,atk:12,def:9,xp:25,moves:["Raggio","Lampo Sacro"]},
+  ],
+  elite:[
+    {name:"Fenice Oscura",emoji:"🦅",type:"fuoco",hp:110,atk:17,def:11,xp:65,moves:["Fiamma","Tempesta di Fuoco","Scaglie Ardenti"]},
+    {name:"Idra delle Nebbie",emoji:"🐍",type:"veleno",hp:130,atk:14,def:15,xp:70,moves:["Pioggia Acida","Virulenza","Nebbia Tossica"]},
+    {name:"Elementale Arcano",emoji:"🌟",type:"luce",hp:100,atk:18,def:10,xp:68,moves:["Lampo Sacro","Tempesta di Luce","Benedizione"]},
+    {name:"Orso Glaciale",emoji:"🐻",type:"ghiaccio",hp:140,atk:16,def:18,xp:72,moves:["Blizzard","Valanga Glaciale","Cristallizzazione"]},
+  ],
+  boss:[
+    {name:"Il Re Lich",emoji:"☠️",type:"ombra",hp:200,atk:22,def:14,xp:180,moves:["Lama d'Ombra","Vortice Oscuro","Maledizione","Oblio Eterno"]},
+    {name:"Drago Antico",emoji:"🐲",type:"drago",hp:220,atk:26,def:16,xp:200,moves:["Vortice Draconico","Cataclisma Antico","Soffio","Squama Adamantina"]},
+    {name:"Signore dei Ghiacci",emoji:"❄️",type:"ghiaccio",hp:190,atk:24,def:20,xp:195,moves:["Era Glaciale","Aurora Boreale","Cristallizzazione","Blizzard"]},
+  ]
+};
+
+// XP thresholds per livello (0-indexed = livello 1..10 base)
+const XP_TABLE = [0,100,220,380,580,820,1100,1430,1810,2240];
+// evoluzione a lv 3 e lv 6
+const EVO_LEVELS = [3,6];
+
+// ══════════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════════
+let G = {};
+
+function freshState() {
+  return {
+    player: null,
+    evoStage: 0,       // 0,1,2
+    level: 1,
+    xp: 0,
+    inventory: [],
+    floor: 1,
+    kills: 0,
+    mapNodes: [],
+    currentRow: -1,
+    pendingMapRow: -1,
+    battle: null,
+    strategy: 'attack',
+    battleTurn: 0,
+    autoInterval: null,
+    speed: 1,
+    evoAvailable: false,
+    selectedStarter: -1,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TITLE
+// ══════════════════════════════════════════════════════════════
+function initTitle() {
+  const grid = document.getElementById('starter-grid');
+  grid.innerHTML = '';
+  const starterTypes = ['fuoco','acqua','erba'];
+  starterTypes.forEach((t,i) => {
+    const c = CREATURE_LINES[t][0];
+    const card = document.createElement('div');
+    card.className = 'sc';
+    card.id = 'sc-'+i;
+    card.innerHTML = `
+      <span class="sc-sprite">${c.emoji}</span>
+      <div class="sc-name">${c.name}</div>
+      <span class="badge t-${t}" style="margin-bottom:6px">${t.toUpperCase()}</span>
+      <div class="sc-stats">HP:${c.hp} ATK:${c.atk} DEF:${c.def} SPD:${c.spd}</div>
+    `;
+    card.onclick = () => {
+      document.querySelectorAll('.sc').forEach(x=>x.classList.remove('selected'));
+      card.classList.add('selected');
+      G.selectedStarter = i;
+      document.getElementById('btn-begin').disabled = false;
+    };
+    grid.appendChild(card);
+  });
+}
+
+function beginGame() {
+  const t = ['fuoco','acqua','erba'][G.selectedStarter];
+  G.player = cloneCreature(t, 0);
+  G.evoStage = 0;
+  G.level = 1; G.xp = 0;
+  G.floor = 1; G.kills = 0;
+  G.inventory = [];
+  G.evoAvailable = false;
+  buildMap();
+  showScreen('map-screen');
+  updateSidebar();
+}
+
+function cloneCreature(typeKey, stage) {
+  const base = CREATURE_LINES[typeKey][stage];
+  return {
+    ...base,
+    hp: base.hp, maxHp: base.hp,
+    mp: base.mp, maxMp: base.mp,
+    typeKey
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MAP
+// ══════════════════════════════════════════════════════════════
+function buildMap() {
+  const isBossFloor = G.floor % 5 === 0;
+  let layout;
+  if (isBossFloor) {
+    layout = [
+      [{type:'battle'},{type:'heal'}],
+      [{type:'elite'},{type:'item'}],
+      [{type:'boss'}]
+    ];
+  } else {
+    const swapRow = Math.random() < 0.25 ? Math.floor(Math.random()*3)+1 : -1;
+    layout = [
+      [{type:'battle'},{type:'item'}],
+      [{type:'battle'},{type:'heal'},{type:'battle'}],
+      [{type:'elite'},{type:'battle'}],
+      [{type:'battle'},{type:'item'}],
+      [{type:'boss'}]
+    ];
+    if (swapRow >= 0 && swapRow < layout.length) {
+      const idx = Math.floor(Math.random()*layout[swapRow].length);
+      layout[swapRow][idx] = {type:'swap'};
+    }
+  }
+  G.mapNodes = layout.map((row,ri)=>row.map((n,ni)=>({...n,row:ri,col:ni,visited:false,available:ri===0})));
+  G.currentRow = -1;
+  renderMap();
+}
+
+function renderMap() {
+  document.getElementById('map-floor-badge').textContent = 'FLOOR '+G.floor;
+  document.getElementById('floor-num').textContent = G.floor;
+  const grid = document.getElementById('map-grid');
+  grid.innerHTML = '';
+  const icons = {battle:'⚔️',elite:'💜',boss:'👑',item:'🎁',heal:'💧',swap:'✨'};
+  const labels = {battle:'Battaglia',elite:'Elite',boss:'Boss',item:'Oggetto',heal:'Riposo',swap:'Creatura'};
+  G.mapNodes.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'map-row';
+    row.forEach(node => {
+      const el = document.createElement('div');
+      el.className = `mn mn-${node.type}`;
+      if (node.available && !node.visited) el.classList.add('avail');
+      else if (node.visited) el.classList.add('visited');
+      else el.classList.add('locked');
+      el.innerHTML = `${icons[node.type]}<span class="mn-label">${labels[node.type]}</span>`;
+      el.style.fontSize = '24px';
+      if (node.available && !node.visited) el.onclick = () => enterNode(node.row, node.col);
+      rowEl.appendChild(el);
+    });
+    grid.appendChild(rowEl);
+  });
+}
+
+function enterNode(ri, ci) {
+  const node = G.mapNodes[ri][ci];
+  node.visited = true;
+  G.pendingMapRow = ri;
+  if (node.type === 'heal') {
+    const h = Math.floor(G.player.maxHp * 0.45);
+    G.player.hp = Math.min(G.player.maxHp, G.player.hp + h);
+    G.player.mp = Math.min(G.player.maxMp, G.player.mp + 20);
+    showToast('💧 Hai recuperato '+h+' HP e 20 MP!');
+    unlockNext(ri); renderMap(); updateSidebar();
+    return;
+  }
+  if (node.type === 'item') { showReward(); return; }
+  if (node.type === 'swap') { showSwap(); return; }
+  startBattle(node.type);
+}
+
+function unlockNext(ri) {
+  const next = ri + 1;
+  if (next < G.mapNodes.length) G.mapNodes[next].forEach(n => n.available = true);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BATTLE
+// ══════════════════════════════════════════════════════════════
+function startBattle(type) {
+  const pool = ENEMIES_DB[type] || ENEMIES_DB.battle;
+  const base = pool[Math.floor(Math.random()*pool.length)];
+  const scale = 1 + (G.floor-1)*0.14 + (G.level-1)*0.05;
+  const enemy = {
+    ...base,
+    hp: Math.floor(base.hp * scale),
+    maxHp: Math.floor(base.hp * scale),
+    atk: Math.floor(base.atk * scale),
+    def: base.def,
+    statuses: [],
+    buffAtk: 0, buffDef: 0
+  };
+  G.battle = {
+    enemy,
+    playerStatuses: [],
+    pBuffAtk:0, pBuffDef:0, pBuffAtkT:0, pBuffDefT:0, pRegen:0, pDrain:0,
+    eBuffAtk:0, eBuffDef:0, eBuffAtkT:0, eBuffDefT:0, eRegen:0, eDrain:0,
+    turn: 1,
+    waitingForStrat: true,
+    type
+  };
+  G.strategy = 'attack';
+  G.battleTurn = 1;
+
+  document.getElementById('btl-lbl').textContent = {battle:'BATTAGLIA',elite:'⚔ ELITE',boss:'★ BOSS ★'}[type]||'BATTAGLIA';
+  document.getElementById('e-sprite').textContent = enemy.emoji;
+  document.getElementById('p-sprite').textContent = G.player.emoji;
+  document.getElementById('btl-log').innerHTML = '';
+  updateBattleUI();
+  setStratUI('attack');
+  setBtlBtnsEnabled(true);
+  showScreen('battle-screen');
+  logB('Un <strong>'+enemy.name+'</strong> [<span class="badge t-'+enemy.type+'">'+enemy.type+'</span>] ti sfida!');
+}
+
+function setStrat(s) {
+  if (!G.battle || !G.battle.waitingForStrat) return;
+  if (s === 'item') {
+    const usable = G.inventory.filter(it => ['heal_hp','heal_mp','heal_pct'].includes(it.effect));
+    if (!usable.length) { showToast('Nessun oggetto usabile!'); return; }
+    const item = usable[0];
+    applyItem(item, true);
+    G.inventory.splice(G.inventory.indexOf(item), 1);
+    updateSidebar();
+    runBattleTick('item');
+    return;
+  }
+  G.strategy = s;
+  setStratUI(s);
+  runBattleTick(s);
+}
+
+function runBattleTick(strat) {
+  G.battle.waitingForStrat = false;
+  setBtlBtnsEnabled(false);
+  document.getElementById('strat-turn-lbl').textContent = 'AUTO BATTAGLIA...';
+
+  const delay = G.speed === 2 ? 300 : 700;
+
+  setTimeout(() => {
+    const b = G.battle;
+    if (!b) return;
+    const p = G.player;
+    const e = b.enemy;
+
+    // ── PLAYER ACTION ──
+    if (strat === 'charge') {
+      const mpGain = Math.floor(p.maxMp * 0.3);
+      p.mp = Math.min(p.maxMp, p.mp + mpGain);
+      logB(p.name+' si <span style="color:var(--mp2)">carica</span>! +'+mpGain+' MP');
+      spriteAnim('p-sprite','bounce');
+    } else if (strat !== 'item') {
+      // pick move
+      const move = pickMove(p, e, strat);
+      if (move) {
+        p.mp = Math.max(0, p.mp - move.mpCost);
+        if (move.power > 0) {
+          let eff = typeEff(move.type, e.type);
+          let dmg = calcDmg(p.atk + b.pBuffAtk, move.power, e.def + b.eBuffDef, strat === 'attack');
+          dmg = Math.round(dmg * eff);
+          dmg = Math.max(1, dmg);
+          e.hp = Math.max(0, e.hp - dmg);
+          const effTxt = eff >= 2 ? ' <span style="color:var(--gold)">Super efficace!</span>' : eff <= 0.5 ? ' <span style="color:var(--muted)">Non molto efficace…</span>' : '';
+          logB(p.name+' usa <strong>'+move.name+'</strong>! Danno: <strong style="color:#e74c3c">'+dmg+'</strong>'+effTxt);
+          floatDmg('-'+dmg,'#e74c3c','e-sprite');
+          spriteAnim('e-sprite','shake');
+          applyMoveEffect(move, e, b, 'enemy');
+        } else {
+          // buff move
+          applyMoveEffect(move, p, b, 'player');
+          logB(p.name+' usa <strong>'+move.name+'</strong>!');
+          spriteAnim('p-sprite','bounce');
+        }
+      }
+    }
+
+    updateBattleUI();
+    if (e.hp <= 0) { setTimeout(()=>winBattle(), 400); return; }
+
+    // ── STATUS TICKS ──
+    setTimeout(() => {
+      tickStatuses(b, p, e, delay);
+    }, delay);
+
+  }, delay);
+}
+
+function tickStatuses(b, p, e, delay) {
+  // player statuses
+  b.playerStatuses.forEach(s => {
+    if (s.type==='burn'||s.type==='poison') {
+      const dmg = s.type==='burn'?8:10;
+      p.hp = Math.max(0, p.hp - dmg);
+      logB('<span style="color:'+(s.type==='burn'?'var(--fire)':'var(--poison)')+'">'+s.type.toUpperCase()+'</span> infligge '+dmg+' a '+p.name);
+    }
+    if (s.type==='regen') { const h=12; p.hp=Math.min(p.maxHp,p.hp+h); logB(p.name+' si <span style="color:var(--xp)">rigenera</span> di '+h); }
+    if (s.type==='drain') { const h=10; e.hp=Math.max(0,e.hp-h); p.hp=Math.min(p.maxHp,p.hp+Math.floor(h/2)); logB('Maledizione drena '+h+' dal nemico!'); }
+    s.turns--;
+  });
+  b.playerStatuses = b.playerStatuses.filter(s=>s.turns>0);
+
+  updateBattleUI();
+  if (p.hp<=0){setTimeout(()=>gameOver(),400);return;}
+  if (e.hp<=0){setTimeout(()=>winBattle(),400);return;}
+
+  // ── ENEMY TURN ──
+  setTimeout(()=>{
+    const stun = b.enemy.statuses ? b.enemy.statuses.find(s=>s.type==='stun') : null;
+    if (stun) {
+      stun.turns--;
+      if(stun.turns<=0) b.enemy.statuses=b.enemy.statuses.filter(s=>s.type!=='stun');
+      logB(e.name+' è <span style="color:var(--electric)">stordito</span>!');
+    } else {
+      // freeze
+      const freeze = b.enemy.statuses ? b.enemy.statuses.find(s=>s.type==='freeze'):null;
+      if (freeze) {
+        freeze.turns--;
+        if(freeze.turns<=0) b.enemy.statuses=b.enemy.statuses.filter(s=>s.type!=='freeze');
+        logB(e.name+' è <span style="color:var(--ice)">congelato</span>!');
+      } else {
+        const emove = e.moves[Math.floor(Math.random()*e.moves.length)];
+        const moveDef = MOVES_DB[emove];
+        if (moveDef && moveDef.power > 0) {
+          let eff = typeEff(moveDef.type||e.type, G.player.type);
+          let dmg = calcDmg(e.atk + b.eBuffAtk, moveDef.power, p.def + b.pBuffDef, false);
+          if (G.strategy==='defend') dmg = Math.round(dmg*0.6);
+          dmg = Math.round(dmg * eff);
+          dmg = Math.max(1,dmg);
+          p.hp = Math.max(0, p.hp-dmg);
+          const effTxt = eff>=2?' <span style="color:#e74c3c">Super efficace!</span>':eff<=0.5?' <span style="color:var(--muted)">Non molto efficace…</span>':'';
+          logB(e.name+' usa <strong>'+emove+'</strong>! Danno: <strong style="color:#e74c3c">'+dmg+'</strong>'+effTxt+(G.strategy==='defend'?' 🛡️':''));
+          floatDmg('-'+dmg,'#c0392b','p-sprite');
+          spriteAnim('p-sprite','shake');
+        } else if (moveDef) {
+          if (moveDef.effect && moveDef.effect.st==='regen') { const h=15; e.hp=Math.min(e.maxHp,e.hp+h); logB(e.name+' si cura di '+h+'!'); floatDmg('+'+h,'#27ae60','e-sprite'); }
+          else logB(e.name+' usa '+emove+'!');
+        }
+      }
+    }
+
+    // enemy status ticks
+    if (!e.statuses) e.statuses = [];
+    e.statuses.forEach(s=>{
+      if(s.type==='burn'||s.type==='poison'){const d=s.type==='burn'?7:9;e.hp=Math.max(0,e.hp-d);logB(e.name+' subisce '+d+' da '+s.type);}
+      s.turns--;
+    });
+    e.statuses=e.statuses.filter(s=>s.turns>0);
+
+    G.battleTurn++;
+    document.getElementById('btl-turn').textContent='Turno '+G.battleTurn;
+    updateBattleUI();
+
+    if(p.hp<=0){setTimeout(()=>gameOver(),400);return;}
+    if(e.hp<=0){setTimeout(()=>winBattle(),400);return;}
+
+    // next turn
+    setTimeout(()=>{
+      G.battle.waitingForStrat=true;
+      setBtlBtnsEnabled(true);
+      setStratUI(G.strategy);
+      document.getElementById('strat-turn-lbl').textContent='SCEGLI STRATEGIA';
+    },200);
+
+  }, delay);
+}
+
+function pickMove(p, e, strat) {
+  // strategy influences move selection
+  const affordable = p.moves.map(mn=>MOVES_DB[mn]).filter(m=>m && p.mp >= m.mpCost);
+  if (!affordable.length) return MOVES_DB[p.moves[0]];
+  if (strat === 'attack') {
+    return affordable.reduce((best,m)=> {
+      const bEff = typeEff(best.type, e.type);
+      const mEff = typeEff(m.type, e.type);
+      return (m.power * mEff) > (best.power * bEff) ? m : best;
+    });
+  }
+  if (strat === 'defend') {
+    const buff = affordable.find(m=>m.power===0);
+    return buff || affordable[0];
+  }
+  return affordable[Math.floor(Math.random()*affordable.length)];
+}
+
+function calcDmg(atk, power, def, boosted) {
+  const base = power + Math.floor(atk * 0.55) - Math.floor(def * 0.4);
+  const variance = Math.floor(Math.random()*8) - 3;
+  const boost = boosted ? 1.3 : 1;
+  return Math.max(1, Math.round((base + variance) * boost));
+}
+
+function applyMoveEffect(move, target, b, side) {
+  const eff = move.effect;
+  if (!eff) return;
+  const statuses = side==='player' ? b.playerStatuses : (target.statuses = target.statuses||[]);
+  if (eff.st==='burn'||eff.st==='freeze'||eff.st==='stun'||eff.st==='poison') {
+    if (Math.random()<(eff.ch||0.5) && !statuses.find(s=>s.type===eff.st)) {
+      statuses.push({type:eff.st, turns:eff.turns||2});
+      const msgs={burn:'brucia!🔥',freeze:'è congelato!❄️',stun:'è stordito!⚡',poison:'è avvelenato!☠️'};
+      logB((side==='enemy'?target.name:G.player.name)+' '+msgs[eff.st]);
+    }
+  }
+  if (eff.st==='atk_up') { if(side==='player'){b.pBuffAtk+=6;b.pBuffAtkT=eff.turns;} else {b.eBuffAtk+=5;} logB('ATK aumentato!'); }
+  if (eff.st==='def_up') { if(side==='player'){b.pBuffDef+=6;b.pBuffDefT=eff.turns;} else {b.eBuffDef+=5;} logB('DEF aumentata!'); }
+  if (eff.st==='def_down' && side==='enemy') { b.eBuffDef=Math.max(b.eBuffDef-6,-10); logB('DEF nemica ridotta!'); }
+  if (eff.st==='regen') { if(side==='player') { if(!b.playerStatuses.find(s=>s.type==='regen')) b.playerStatuses.push({type:'regen',turns:eff.turns||3}); } }
+  if (eff.st==='drain' && side==='player') { if(!b.playerStatuses.find(s=>s.type==='drain')) b.playerStatuses.push({type:'drain',turns:eff.turns||3}); }
+  if (eff.st==='spd_up') logB(G.player.name+' è più veloce!');
+}
+
+function updateBattleUI() {
+  const b = G.battle;
+  if (!b) return;
+  const e = b.enemy, p = G.player;
+  document.getElementById('e-name').textContent = e.name;
+  document.getElementById('e-lvl').textContent = 'Lv'+G.level;
+  document.getElementById('e-hp-bar').style.width = Math.max(0,e.hp/e.maxHp*100)+'%';
+  document.getElementById('e-hp-txt').textContent = Math.max(0,e.hp)+'/'+e.maxHp;
+  document.getElementById('p-name').textContent = p.name;
+  document.getElementById('p-lvl').textContent = 'Lv'+G.level;
+  document.getElementById('p-hp-bar').style.width = Math.max(0,p.hp/p.maxHp*100)+'%';
+  document.getElementById('p-hp-txt').textContent = Math.max(0,p.hp)+'/'+p.maxHp;
+  document.getElementById('p-mp-bar').style.width = (p.mp/p.maxMp*100)+'%';
+  document.getElementById('p-mp-txt').textContent = 'MP '+p.mp+'/'+p.maxMp;
+  const xpNext = XP_TABLE[Math.min(G.level, XP_TABLE.length-1)];
+  document.getElementById('p-xp-bar').style.width = (xpNext>0?Math.min(100,G.xp/xpNext*100):100)+'%';
+  document.getElementById('p-xp-txt').textContent = 'XP '+G.xp+'/'+(xpNext||'MAX');
+
+  // statuses player
+  const pSt = document.getElementById('p-status');
+  pSt.innerHTML = (b.playerStatuses||[]).map(s=>`<span class="stbadge st-${s.type}">${s.type}(${s.turns})</span>`).join('');
+  // statuses enemy
+  const eSt = document.getElementById('e-status');
+  eSt.innerHTML = ((b.enemy.statuses)||[]).map(s=>`<span class="stbadge st-${s.type}">${s.type}(${s.turns})</span>`).join('');
+
+  // item button desc
+  const usable = G.inventory.filter(it=>['heal_hp','heal_mp','heal_pct'].includes(it.effect));
+  document.getElementById('strat-item-desc').textContent = usable.length ? usable[0].name : 'Nessuno';
+  document.getElementById('sb-item').disabled = usable.length===0;
+}
+
+function setBtlBtnsEnabled(en) {
+  ['sb-attack','sb-defend','sb-charge','sb-item'].forEach(id=>{
+    const btn = document.getElementById(id);
+    if(id==='sb-item'){
+      btn.disabled = !en || G.inventory.filter(it=>['heal_hp','heal_mp','heal_pct'].includes(it.effect)).length===0;
+    } else {
+      btn.disabled = !en;
+    }
+  });
+}
+
+function setStratUI(s) {
+  ['attack','defend','charge','item'].forEach(x=>{
+    document.getElementById('sb-'+x)?.classList.toggle('active-strat', x===s);
+  });
+}
+
+function toggleSpeed() {
+  G.speed = G.speed===1?2:1;
+  document.getElementById('speed-btn').textContent = G.speed===1?'⏩ 2x':'⏩ 1x';
+}
+
+function winBattle() {
+  G.battle.waitingForStrat = false;
+  setBtlBtnsEnabled(false);
+  const xp = G.battle.enemy.xp;
+  G.xp += xp;
+  G.kills++;
+  logB('🏆 Vittoria! +<strong>'+xp+'</strong> XP');
+  checkLevelUp();
+  updateBattleUI();
+  setTimeout(()=>showReward(), 900);
+}
+
+function gameOver() {
+  setBtlBtnsEnabled(false);
+  G.player.hp = 0;
+  document.getElementById('go-floor').textContent = G.floor;
+  document.getElementById('go-kills').textContent = G.kills;
+  document.getElementById('go-msg').textContent = (G.battle?G.battle.enemy.name:'Il dungeon')+' ti ha sopraffatto...';
+  setTimeout(()=>showScreen('gameover-screen'), 700);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LEVEL UP / EVOLVE
+// ══════════════════════════════════════════════════════════════
+function checkLevelUp() {
+  const maxLv = XP_TABLE.length;
+  while (G.level < maxLv) {
+    const needed = XP_TABLE[G.level];
+    if (G.xp >= needed) {
+      G.xp -= needed;
+      G.level++;
+      G.player.atk += 2;
+      G.player.def += 1;
+      G.player.maxHp += 8;
+      G.player.hp = Math.min(G.player.hp + 8, G.player.maxHp);
+      logB('⬆ <strong>LEVEL UP!</strong> Sei ora Lv'+G.level+'!');
+      // check evo threshold
+      if (EVO_LEVELS.includes(G.level) && G.evoStage < 2) {
+        G.evoAvailable = true;
+        showToast('✨ Puoi evolvere! Vai alla mappa.');
+      }
+    } else break;
+  }
+}
+
+function doEvolve() {
+  if (!G.evoAvailable || G.evoStage >= 2) return;
+  const nextStage = G.evoStage + 1;
+  const current = G.player;
+  const evolved = cloneCreature(current.typeKey, nextStage);
+  // preserve current HP ratio
+  evolved.hp = Math.round(evolved.maxHp * (current.hp / current.maxHp));
+  evolved.mp = Math.round(evolved.maxMp * (current.mp / current.maxMp));
+  const sub = document.getElementById('evo-sub');
+  sub.textContent = current.name + ' sta evolvendo in ' + evolved.name + '!';
+  const grid = document.getElementById('evo-grid');
+  grid.innerHTML = '';
+  // show before/after
+  [{label:'Attuale', c:current},{label:'Evoluzione', c:evolved}].forEach((opt,i)=>{
+    const card = document.createElement('div');
+    card.className = 'choice-card';
+    card.innerHTML = `<span class="cc-icon">${opt.c.emoji}</span>
+      <div class="cc-name">${opt.c.name}</div>
+      <span class="badge t-${opt.c.type}" style="margin-bottom:6px">${opt.c.type}</span>
+      <div class="cc-stats">HP:${opt.c.maxHp} ATK:${opt.c.atk} DEF:${opt.c.def}</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">${i===0?'Rimani così':'Evolviti!'}</div>`;
+    card.onclick = () => {
+      if (i===1) {
+        G.player = evolved;
+        G.evoStage = nextStage;
+        G.evoAvailable = false;
+        showToast('✨ '+evolved.name+' ha raggiunto la sua forma finale!');
+      } else {
+        showToast('Evoluzione rimandata.');
+        G.evoAvailable = false;
+      }
+      showScreen('map-screen');
+      renderMap();
+      updateSidebar();
+    };
+    grid.appendChild(card);
+  });
+  showScreen('evolve-screen');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  REWARD
+// ══════════════════════════════════════════════════════════════
+function showReward() {
+  const picks = [...ITEMS_POOL].sort(()=>Math.random()-.5).slice(0,3);
+  const grid = document.getElementById('reward-grid');
+  grid.innerHTML='';
+  picks.forEach(item=>{
+    const card=document.createElement('div');
+    card.className='choice-card';
+    card.innerHTML=`<span class="cc-icon">${item.emoji}</span><div class="cc-name">${item.name}</div><div class="cc-desc">${item.desc}</div>`;
+    card.onclick=()=>{ G.inventory.push({...item}); afterReward(); };
+    grid.appendChild(card);
+  });
+  document.getElementById('reward-sub').textContent='Hai sconfitto il nemico! Scegli una ricompensa.';
+  showScreen('reward-screen');
+}
+
+function skipReward() { afterReward(); }
+
+function afterReward() {
+  const ri = G.pendingMapRow;
+  unlockNext(ri);
+  if (ri+1 >= G.mapNodes.length) { G.floor++; buildMap(); }
+  showScreen('map-screen');
+  renderMap();
+  updateSidebar();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SWAP
+// ══════════════════════════════════════════════════════════════
+function showSwap() {
+  const types = Object.keys(CREATURE_LINES).filter(t=>t!==G.player.typeKey);
+  const picks = types.sort(()=>Math.random()-.5).slice(0,2);
+  const grid = document.getElementById('swap-grid');
+  grid.innerHTML='';
+  picks.forEach(t=>{
+    const c=CREATURE_LINES[t][G.evoStage];
+    const card=document.createElement('div');
+    card.className='choice-card';
+    card.innerHTML=`<span class="cc-icon">${c.emoji}</span>
+      <div class="cc-name">${c.name}</div>
+      <span class="badge t-${t}" style="margin-bottom:6px">${t}</span>
+      <div class="cc-stats">HP:${c.hp} ATK:${c.atk} DEF:${c.def} SPD:${c.spd}</div>
+      <div class="cc-desc" style="margin-top:6px">Sostituisce il tuo attuale compagno</div>`;
+    card.onclick=()=>{
+      const newC=cloneCreature(t,G.evoStage);
+      G.player=newC;
+      showToast('✨ '+newC.name+' si unisce a te!');
+      afterReward();
+    };
+    grid.appendChild(card);
+  });
+  showScreen('swap-screen');
+}
+
+function keepCurrent() { afterReward(); }
+
+// ══════════════════════════════════════════════════════════════
+//  ITEMS
+// ══════════════════════════════════════════════════════════════
+function applyItem(item, inBattle) {
+  const p = G.player;
+  if (item.effect==='heal_hp') { p.hp=Math.min(p.maxHp,p.hp+item.val); if(inBattle)logB('🧪 Usato '+item.name+'! +'+item.val+' HP'); }
+  if (item.effect==='heal_mp') { p.mp=Math.min(p.maxMp,p.mp+item.val); if(inBattle)logB('💧 Usato '+item.name+'! +'+item.val+' MP'); }
+  if (item.effect==='heal_pct') { const h=Math.floor(p.maxHp*item.val); p.hp=Math.min(p.maxHp,p.hp+h); if(inBattle)logB('⚗️ Usato '+item.name+'! +'+h+' HP'); }
+  if (item.effect==='atk_perm') { p.atk+=item.val; }
+  if (item.effect==='def_perm') { p.def+=item.val; }
+  if (item.effect==='maxhp') { p.maxHp+=item.val; p.hp=Math.min(p.maxHp,p.hp+item.val); }
+  if (item.effect==='maxmp') { p.maxMp+=item.val; p.mp=Math.min(p.maxMp,p.mp+item.val); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════════════════════════════════════
+function updateSidebar() {
+  const p = G.player;
+  document.getElementById('floor-num').textContent = G.floor;
+  const xpNext = XP_TABLE[Math.min(G.level, XP_TABLE.length-1)];
+  document.getElementById('party-sb').innerHTML = `
+    <div style="text-align:center;font-size:36px;margin-bottom:6px">${p.emoji}</div>
+    <div class="pm-name">${p.name} <span class="badge t-${p.type}">${p.type}</span></div>
+    <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);margin-bottom:6px">Lv${G.level}</div>
+    <div class="bar-label-row"><span>HP</span><span>${Math.max(0,p.hp)}/${p.maxHp}</span></div>
+    <div class="bar-wrap" style="margin-bottom:5px"><div class="bar-fill bar-hp" style="width:${Math.max(0,p.hp/p.maxHp*100)}%"></div></div>
+    <div class="bar-label-row"><span>MP</span><span>${p.mp}/${p.maxMp}</span></div>
+    <div class="bar-wrap" style="margin-bottom:5px"><div class="bar-fill bar-mp" style="width:${p.mp/p.maxMp*100}%"></div></div>
+    <div class="bar-label-row"><span>XP</span><span>${G.xp}/${xpNext||'MAX'}</span></div>
+    <div class="bar-wrap" style="margin-bottom:8px"><div class="bar-fill bar-xp" style="width:${xpNext>0?Math.min(100,G.xp/xpNext*100):100}%"></div></div>
+    <div class="pm-stat-row">ATK ${p.atk} &nbsp; DEF ${p.def} &nbsp; SPD ${p.spd}</div>
+  `;
+  const evoBtn = document.getElementById('evolve-btn');
+  evoBtn.disabled = !G.evoAvailable || G.evoStage >= 2;
+  evoBtn.textContent = G.evoAvailable ? '⬆ EVOLVITI!' : (G.evoStage>=2 ? '✓ FORMA FINALE' : '⬆ EVOLUZIONE');
+
+  // items list
+  const iSb = document.getElementById('items-sb');
+  if (G.inventory.length === 0) {
+    iSb.innerHTML = '<span>Nessun oggetto</span>';
+  } else {
+    iSb.innerHTML = G.inventory.map(it=>`<div style="margin-bottom:3px">${it.emoji} ${it.name}</div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function logB(msg) {
+  const log = document.getElementById('btl-log');
+  const d = document.createElement('div');
+  d.className = 'log-entry new';
+  d.innerHTML = msg;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+  setTimeout(()=>d.classList.remove('new'), 1500);
+}
+
+function floatDmg(txt, color, anchorId) {
+  const game = document.getElementById('game');
+  const anchor = document.getElementById(anchorId);
+  if (!anchor) return;
+  const gr = game.getBoundingClientRect();
+  const ar = anchor.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'dmg-float';
+  el.textContent = txt;
+  el.style.color = color;
+  el.style.left = (ar.left-gr.left+ar.width/2-12)+'px';
+  el.style.top = (ar.top-gr.top+ar.height/2-20)+'px';
+  game.appendChild(el);
+  setTimeout(()=>el.remove(),1300);
+}
+
+function spriteAnim(id, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('shake','bounce');
+  void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(()=>el.classList.remove(cls), 500);
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.style.opacity='0',1800);
+  setTimeout(()=>t.remove(),2200);
+}
+
+function restartGame() {
+  G = freshState();
+  initTitle();
+  showScreen('title-screen');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+G = freshState();
+initTitle();
+</script>
+</body>
+</html>
